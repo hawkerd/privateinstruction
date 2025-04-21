@@ -117,18 +117,39 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// get user info
-func GetUserInfo(w http.ResponseWriter, r *http.Request) {
-	// make sure the user is authenticated
-	userID := r.Context().Value("userID")
-	userIDInt, ok := userID.(uint)
+func isUserAuthenticated(r *http.Request) (uint, bool) {
+	// extract the token from the request header
+	tokenString := r.Header.Get("Authorization")
+	if tokenString == "" {
+		return 0, false
+	}
+
+	// parse the token
+	claims, err := auth.ParseJWT(tokenString)
+	if err != nil {
+		return 0, false
+	}
+
+	// extract the user ID from the claims
+	userID, ok := claims["user_id"].(float64)
 	if !ok {
-		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return 0, false
+	}
+
+	return uint(userID), true
+}
+
+// get user info
+func ReadUser(w http.ResponseWriter, r *http.Request) {
+	// make sure the user is authenticated
+	userID, ok := isUserAuthenticated(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	var user models.User
-	if err := db.First(&user, userIDInt).Error; err != nil {
+	if err := db.First(&user, userID).Error; err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
@@ -137,3 +158,69 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
 }
+
+// create a class
+func CreateClass(w http.ResponseWriter, r *http.Request) {
+	// make sure the user is authenticated
+	userID, ok := isUserAuthenticated(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// decode the request body into the class struct
+	var class models.Class
+	if err := json.NewDecoder(r.Body).Decode(&class); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// validate the class input
+	if class.Name == "" {
+		class.Name = "Unnamed Class"
+	}
+
+	// create the new class
+	if err := db.Create(&class).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// create a class member entry for the user
+	classMember := models.ClassMember{
+		ClassID: class.ID,
+		UserID:  userID,
+		Role:    "instructor",
+	}
+
+	if err := db.Create(&classMember).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// respond with success
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(class)
+}
+
+//func GetClasses(w http.ResponseWriter, r *http.Request) {
+//	// make sure the user is authenticated
+//	userID, ok := isUserAuthenticated(r)
+//	if !ok {
+//		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+//		return
+//	}
+//
+//	var classes []models.Class
+//	if err := db.Model(&models.ClassMember{}).
+//		Joins("JOIN classes ON class_members.class_id = classes.id").
+//		Where("class_members.user_id = ?", userID).
+//		Select("classes.*").
+//		Scan(&classes).Error; err != nil {
+//		http.Error(w, err.Error(), http.StatusInternalServerError)
+//		return
+//	}
+//
+//	w.WriteHeader(http.StatusOK)
+//	json.NewEncoder(w).Encode(classes)
+//}

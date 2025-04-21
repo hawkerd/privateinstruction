@@ -12,6 +12,11 @@ func TokenAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// extract the token
 		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			http.Error(w, "Missing token", http.StatusUnauthorized)
+			return
+		}
+
 		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 		if tokenString == "" {
 			http.Error(w, "Missing token", http.StatusUnauthorized)

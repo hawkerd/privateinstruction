@@ -9,6 +9,7 @@ import (
 	"github.com/hawkerd/privateinstruction/pkg/handlers"
 	"github.com/hawkerd/privateinstruction/pkg/middleware"
 	"github.com/hawkerd/privateinstruction/pkg/models"
+	"github.com/rs/cors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -46,9 +47,18 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.TokenAuthMiddleware)
-		r.Get("/me", handlers.GetUserInfo)
+		r.Get("/me", handlers.ReadUser)
+		r.Post("/class", handlers.CreateClass)
+		//r.Get("/classes", handlers.GetClasses)
 	})
 
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:3000"}, // Frontend URL
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
+	})
+	handler := c.Handler(r)
+
 	log.Println("Starting server on :8080")
-	http.ListenAndServe(":8080", r)
+	http.ListenAndServe(":8080", handler)
 }
