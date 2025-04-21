@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -40,7 +41,16 @@ func main() {
 	// create a router
 	r := chi.NewRouter()
 
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("Request:", r.Method, r.URL.Path)
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	r.Post("/signup", handlers.SignUp)
+	r.Post("/signin", handlers.SignIn)
+	r.Get("/me", handlers.GetUserInfo)
 
 	log.Println("Starting server on :8080")
 	http.ListenAndServe(":8080", r)
