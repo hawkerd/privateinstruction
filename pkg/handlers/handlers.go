@@ -119,26 +119,16 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 
 // get user info
 func GetUserInfo(w http.ResponseWriter, r *http.Request) {
-	// get the token from the request header
-	tokenString := r.Header.Get("Authorization")
-	if tokenString == "" {
-		http.Error(w, "Missing token", http.StatusUnauthorized)
+	// make sure the user is authenticated
+	userID := r.Context().Value("userID")
+	userIDInt, ok := userID.(uint)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
 		return
 	}
 
-	// parse the token
-	claims, err := auth.ParseJWT(tokenString)
-	if err != nil {
-		http.Error(w, "Invalid token", http.StatusUnauthorized)
-		return
-	}
-
-	// get the user ID from the claims
-	userID := uint(claims["user_id"].(float64))
-
-	// find the user by ID
 	var user models.User
-	if err := db.First(&user, userID).Error; err != nil {
+	if err := db.First(&user, userIDInt).Error; err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}

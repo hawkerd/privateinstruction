@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/hawkerd/privateinstruction/pkg/config"
 	"github.com/hawkerd/privateinstruction/pkg/handlers"
+	"github.com/hawkerd/privateinstruction/pkg/middleware"
 	"github.com/hawkerd/privateinstruction/pkg/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -41,16 +41,13 @@ func main() {
 	// create a router
 	r := chi.NewRouter()
 
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println("Request:", r.Method, r.URL.Path)
-			next.ServeHTTP(w, r)
-		})
-	})
-
 	r.Post("/signup", handlers.SignUp)
 	r.Post("/signin", handlers.SignIn)
-	r.Get("/me", handlers.GetUserInfo)
+
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.TokenAuthMiddleware)
+		r.Get("/me", handlers.GetUserInfo)
+	})
 
 	log.Println("Starting server on :8080")
 	http.ListenAndServe(":8080", r)
