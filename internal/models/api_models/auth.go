@@ -19,3 +19,10 @@ type SignInRequest struct {
 type SignInResponse struct {
 	Token string `json:"token"`
 }
+
+// update password
+type UpdatePasswordRequest struct {
+	UserID      uint   `json:"user_id"`
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}

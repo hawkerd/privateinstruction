@@ -108,3 +108,43 @@ func SignIn(authService *services.AuthService) http.HandlerFunc {
 		}
 	}
 }
+
+// update password
+func UpdatePassword(authService *services.AuthService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// decode the request body
+		var req api_models.UpdatePasswordRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+
+		// input validation
+		if req.UserID == 0 || req.OldPassword == "" || req.NewPassword == "" {
+			http.Error(w, "user_id, old_password, and new_password are required", http.StatusBadRequest)
+			return
+		}
+
+		// build the service request
+		sreq := service_models.UpdatePasswordRequest{
+			UserID:      req.UserID,
+			OldPassword: req.OldPassword,
+			NewPassword: req.NewPassword,
+		}
+
+		// call the service
+		if err := authService.UpdatePassword(sreq); err != nil {
+			// return appropriate error message
+			if errors.Is(err, services.ErrInvalidCredentials) {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+			} else if errors.Is(err, services.ErrUserNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			} else {
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+			}
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}

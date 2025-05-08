@@ -6,12 +6,12 @@ import (
 	"net/http"
 
 	"github.com/hawkerd/privateinstruction/internal/models/api_models"
+	"github.com/hawkerd/privateinstruction/internal/models/service_models"
 	"github.com/hawkerd/privateinstruction/internal/services"
 )
 
 const userIDKey = "userID"
 
-// get user info
 func ReadUser(userService *services.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract the user ID from the request context
@@ -21,8 +21,13 @@ func ReadUser(userService *services.UserService) http.HandlerFunc {
 			return
 		}
 
+		// build the service request
+		sreq := service_models.ReadUserRequest{
+			UserID: userID,
+		}
+
 		// call the service to get user info
-		user, err := userService.ReadUser(userID)
+		sres, err := userService.ReadUser(sreq)
 		if err != nil {
 			if errors.Is(err, services.ErrUserNotFound) {
 				http.Error(w, err.Error(), http.StatusNotFound)
@@ -34,8 +39,8 @@ func ReadUser(userService *services.UserService) http.HandlerFunc {
 
 		// build the response
 		res := api_models.ReadUserResponse{
-			Username: user.Username,
-			Email:    user.Email,
+			Username: sres.Username,
+			Email:    sres.Email,
 		}
 
 		// encode the response
@@ -45,5 +50,70 @@ func ReadUser(userService *services.UserService) http.HandlerFunc {
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
+	}
+}
+
+func DeleteUser(userService *services.UserService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// extract the user ID from the request context
+		userID, ok := r.Context().Value(userIDKey).(uint)
+		if !ok {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// build the service request
+		sreq := service_models.DeleteUserRequest{
+			UserID: userID,
+		}
+
+		// call the service to delete user
+		if err := userService.DeleteUser(sreq); err != nil {
+			if errors.Is(err, services.ErrUserNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func UpdateUser(userService *services.UserService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// extract the user ID from the request context
+		userID, ok := r.Context().Value(userIDKey).(uint)
+		if !ok {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// decode the request body
+		var req api_models.UpdateUserRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+
+		// build the service request
+		sreq := service_models.UpdateUserRequest{
+			UserID:   userID,
+			Username: req.Username,
+			Email:    req.Email,
+		}
+
+		// call the service to update user info
+		if err := userService.UpdateUser(sreq); err != nil {
+			if errors.Is(err, services.ErrUserNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

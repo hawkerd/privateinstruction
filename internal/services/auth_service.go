@@ -59,7 +59,7 @@ func (s *AuthService) SignUp(req service_models.SignUpRequest) error {
 	var user db_models.User
 	user.Username = req.Username
 	user.Email = req.Email
-	user.Password = hashedPassword
+	user.HashedPassword = hashedPassword
 
 	// create the user in the database
 	if err := s.DB.Create(&user).Error; err != nil {
@@ -84,7 +84,7 @@ func (s *AuthService) SignIn(req service_models.SignInRequest) (service_models.S
 	}
 
 	// check the input password against the hashed password
-	if !auth.CheckPassword(user.Password, req.Password) {
+	if !auth.CheckPassword(user.HashedPassword, req.Password) {
 		return service_models.SignInResponse{}, ErrInvalidCredentials
 	}
 
@@ -100,4 +100,32 @@ func (s *AuthService) SignIn(req service_models.SignInRequest) (service_models.S
 	}
 
 	return res, nil
+}
+
+// update the user's password
+func (s *AuthService) UpdatePassword(req service_models.UpdatePasswordRequest) error {
+	// find the user by ID
+	var user db_models.User
+	if err := s.DB.First(&user, req.UserID).Error; err != nil {
+		return ErrInvalidCredentials
+	}
+
+	// check the input password against the hashed password
+	if !auth.CheckPassword(user.HashedPassword, req.OldPassword) {
+		return ErrInvalidCredentials
+	}
+
+	// hash the new password
+	hashedPassword, err := auth.HashPassword(req.NewPassword)
+	if err != nil {
+		return ErrInternalServerError
+	}
+
+	// update the user's password in the database
+	user.HashedPassword = hashedPassword
+	if err := s.DB.Save(&user).Error; err != nil {
+		return ErrInternalServerError
+	}
+
+	return nil
 }

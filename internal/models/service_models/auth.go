@@ -15,3 +15,9 @@ type SignInRequest struct {
 type SignInResponse struct {
 	Token string
 }
+
+type UpdatePasswordRequest struct {
+	UserID      uint
+	OldPassword string
+	NewPassword string
+}

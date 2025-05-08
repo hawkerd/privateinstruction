@@ -35,6 +35,10 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.TokenAuthMiddleware)
 		r.Get("/me", handlers.ReadUser(userService))
+		r.Delete("/me", handlers.DeleteUser(userService))
+		r.Put("/me", handlers.UpdateUser(userService))
+		r.Put("/me/password", handlers.UpdatePassword(authService))
+
 		//r.Post("/class", handlers.CreateClass)
 		//r.Get("/classes", handlers.GetClasses)
 	})
