@@ -5,50 +5,37 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/hawkerd/privateinstruction/pkg/config"
-	"github.com/hawkerd/privateinstruction/pkg/handlers"
-	"github.com/hawkerd/privateinstruction/pkg/middleware"
-	"github.com/hawkerd/privateinstruction/pkg/models"
+	"github.com/hawkerd/privateinstruction/internal/db"
+	"github.com/hawkerd/privateinstruction/internal/handlers"
+	"github.com/hawkerd/privateinstruction/internal/middleware"
+	"github.com/hawkerd/privateinstruction/internal/migrations"
+	"github.com/hawkerd/privateinstruction/internal/services"
 	"github.com/rs/cors"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
-var db *gorm.DB
-
 func main() {
-	// load environment variables
-	config.LoadEnv()
-
-	// connect to the database
-	dsn := config.GetDatabaseURL()
-	var err error
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// establish db connection and run the migrations
+	dbConn, err := db.ConnectDB()
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
-
-	err = db.AutoMigrate(
-		&models.User{},
-		&models.Class{},
-		&models.ClassMember{},
-	)
-	if err != nil {
-		log.Fatalf("failed to migrate database schema: %v", err)
+	if err := migrations.Migrate(dbConn); err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
 	}
 
-	handlers.SetDB(db)
+	authService := services.NewAuthService(dbConn)
+	userService := services.NewUserService(dbConn)
 
 	// create a router
 	r := chi.NewRouter()
 
-	r.Post("/signup", handlers.SignUp)
-	r.Post("/signin", handlers.SignIn)
+	r.Post("/signup", handlers.SignUp(authService))
+	r.Post("/signin", handlers.SignIn(authService))
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.TokenAuthMiddleware)
-		r.Get("/me", handlers.ReadUser)
-		r.Post("/class", handlers.CreateClass)
+		r.Get("/me", handlers.ReadUser(userService))
+		//r.Post("/class", handlers.CreateClass)
 		//r.Get("/classes", handlers.GetClasses)
 	})
 

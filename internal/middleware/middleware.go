@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hawkerd/privateinstruction/pkg/auth"
+	"github.com/hawkerd/privateinstruction/internal/auth"
 )
 
 func TokenAuthMiddleware(next http.Handler) http.Handler {
