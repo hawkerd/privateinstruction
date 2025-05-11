@@ -27,6 +27,7 @@ func main() {
 
 	authService := services.NewAuthService(dbConn)
 	userService := services.NewUserService(dbConn)
+	classService := services.NewClassService(dbConn)
 
 	// create a router
 	r := chi.NewRouter()
@@ -43,6 +44,10 @@ func main() {
 		r.Put("/me", handlers.UpdateUser(userService))
 		r.Put("/me/password", handlers.UpdatePassword(authService))
 
+		r.Post("/class", handlers.CreateClass(classService))
+		r.Delete("/class/{id}", handlers.DeleteClass(classService))
+		r.Get("/class/{id}", handlers.ReadClass(classService))
+		r.Put("/class/{id}", handlers.UpdateClass(classService))
 		//r.Post("/class", handlers.CreateClass)
 		//r.Get("/classes", handlers.GetClasses)
 	})

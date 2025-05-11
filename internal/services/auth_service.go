@@ -56,10 +56,11 @@ func (s *AuthService) SignUp(req service_models.SignUpRequest) error {
 	}
 
 	// create the new user
-	var user db_models.User
-	user.Username = req.Username
-	user.Email = req.Email
-	user.HashedPassword = hashedPassword
+	user := db_models.User{
+		Username:       req.Username,
+		Email:          req.Email,
+		HashedPassword: hashedPassword,
+	}
 
 	// create the user in the database
 	if err := s.DB.Create(&user).Error; err != nil {

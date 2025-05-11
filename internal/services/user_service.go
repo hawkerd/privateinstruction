@@ -45,6 +45,7 @@ func (s *UserService) ReadUser(req service_models.ReadUserRequest) (*service_mod
 
 // delete a user by ID
 func (s *UserService) DeleteUser(req service_models.DeleteUserRequest) error {
+	// find user
 	var user db_models.User
 	if err := s.DB.First(&user, req.UserID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
