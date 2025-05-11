@@ -12,6 +12,14 @@ import (
 
 const userIDKey = "userID"
 
+//	@Summary		ReadUser
+//	@Description	Get user info
+//	@Accept			json
+//	@Produce		json
+//	@Param			Authorization	header	string	true	"Bearer token"
+//	@Router			/me [get]
+//	@Security		Bearer
+//	@Tags			User
 func ReadUser(userService *services.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract the user ID from the request context
@@ -53,6 +61,14 @@ func ReadUser(userService *services.UserService) http.HandlerFunc {
 	}
 }
 
+//	@Summary		DeleteUser
+//	@Description	Delete user account
+//	@Accept			json
+//	@Produce		json
+//	@Param			Authorization	header	string	true	"Bearer token"
+//	@Router			/me [delete]
+//	@Security		Bearer
+//	@Tags			User
 func DeleteUser(userService *services.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract the user ID from the request context
@@ -81,6 +97,15 @@ func DeleteUser(userService *services.UserService) http.HandlerFunc {
 	}
 }
 
+//	@Summary		UpdateUser
+//	@Description	Update user info
+//	@Accept			json
+//	@Produce		json
+//	@Param			Authorization	header	string							true	"Bearer token"
+//	@Param			user			body	api_models.UpdateUserRequest	true	"User info"
+//	@Router			/me [put]
+//	@Security		Bearer
+//	@Tags			User
 func UpdateUser(userService *services.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract the user ID from the request context

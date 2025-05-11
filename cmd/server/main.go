@@ -5,12 +5,14 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	_ "github.com/hawkerd/privateinstruction/docs"
 	"github.com/hawkerd/privateinstruction/internal/db"
 	"github.com/hawkerd/privateinstruction/internal/handlers"
 	"github.com/hawkerd/privateinstruction/internal/middleware"
 	"github.com/hawkerd/privateinstruction/internal/migrations"
 	"github.com/hawkerd/privateinstruction/internal/services"
 	"github.com/rs/cors"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func main() {
@@ -28,6 +30,8 @@ func main() {
 
 	// create a router
 	r := chi.NewRouter()
+
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	r.Post("/signup", handlers.SignUp(authService))
 	r.Post("/signin", handlers.SignIn(authService))

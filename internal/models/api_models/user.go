@@ -8,7 +8,6 @@ type ReadUserResponse struct {
 
 // update user
 type UpdateUserRequest struct {
-	UserID   uint
 	Username string
 	Email    string
 }
