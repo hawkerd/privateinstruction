@@ -19,3 +19,14 @@ type UpdateClassRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
+
+// generate join code
+type GenerateJoinCodeResponse struct {
+	Code         string `json:"code"`
+	ExpirationDT string `json:"expiration_dt"`
+}
+
+// join class
+type JoinClassRequest struct {
+	JoinCode string `json:"join_code"`
+}

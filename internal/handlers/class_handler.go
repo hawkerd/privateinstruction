@@ -28,15 +28,15 @@ func getClassIDFromRequest(r *http.Request) (uint, error) {
 	return uint(classID), nil
 }
 
-//	@Summary		CreateClass
-//	@Description	Create a new class
-//	@Accept			json
-//	@Produce		json
-//	@Param			Authorization	header	string							true	"Bearer token"
-//	@Param			class			body	api_models.CreateClassRequest	true	"Class info"
-//	@Router			/class [post]
-//	@Security		Bearer
-//	@Tags			Class
+// @Summary		CreateClass
+// @Description	Create a new class
+// @Accept			json
+// @Produce		json
+// @Param			Authorization	header	string							true	"Bearer token"
+// @Param			class			body	api_models.CreateClassRequest	true	"Class info"
+// @Router			/class [post]
+// @Security		Bearer
+// @Tags			Class
 func CreateClass(classService *services.ClassService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract the user ID from the request context
@@ -75,15 +75,15 @@ func CreateClass(classService *services.ClassService) http.HandlerFunc {
 	}
 }
 
-//	@Summary		DeleteClass
-//	@Description	Delete a class
-//	@Accept			json
-//	@Produce		json
-//	@Param			Authorization	header	string	true	"Bearer token"
-//	@Param			id				path	int		true	"Class ID"
-//	@Router			/class/{id} [delete]
-//	@Security		Bearer
-//	@Tags			Class
+// @Summary		DeleteClass
+// @Description	Delete a class
+// @Accept			json
+// @Produce		json
+// @Param			Authorization	header	string	true	"Bearer token"
+// @Param			id				path	int		true	"Class ID"
+// @Router			/class/{id} [delete]
+// @Security		Bearer
+// @Tags			Class
 func DeleteClass(classService *services.ClassService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract the user ID from the request context
@@ -125,15 +125,15 @@ func DeleteClass(classService *services.ClassService) http.HandlerFunc {
 	}
 }
 
-//	@Summary		ReadClass
-//	@Description	Read a class by ID
-//	@Accept			json
-//	@Produce		json
-//	@Param			Authorization	header	string	true	"Bearer token"
-//	@Param			id				path	int		true	"Class ID"
-//	@Router			/class/{id} [get]
-//	@Security		Bearer
-//	@Tags			Class
+// @Summary		ReadClass
+// @Description	Read a class by ID
+// @Accept			json
+// @Produce		json
+// @Param			Authorization	header	string	true	"Bearer token"
+// @Param			id				path	int		true	"Class ID"
+// @Router			/class/{id} [get]
+// @Security		Bearer
+// @Tags			Class
 func ReadClass(classService *services.ClassService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract the user ID from the request context
@@ -187,16 +187,16 @@ func ReadClass(classService *services.ClassService) http.HandlerFunc {
 	}
 }
 
-//	@Summary		UpdateClass
-//	@Description	Update a class
-//	@Accept			json
-//	@Produce		json
-//	@Param			Authorization	header	string							true	"Bearer token"
-//	@Param			id				path	int								true	"Class ID"
-//	@Param			class			body	api_models.UpdateClassRequest	true	"Class info"
-//	@Router			/class/{id} [put]
-//	@Security		Bearer
-//	@Tags			Class
+// @Summary		UpdateClass
+// @Description	Update a class
+// @Accept			json
+// @Produce		json
+// @Param			Authorization	header	string							true	"Bearer token"
+// @Param			id				path	int								true	"Class ID"
+// @Param			class			body	api_models.UpdateClassRequest	true	"Class info"
+// @Router			/class/{id} [put]
+// @Security		Bearer
+// @Tags			Class
 func UpdateClass(classService *services.ClassService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract the user ID from the request context
@@ -247,6 +247,121 @@ func UpdateClass(classService *services.ClassService) http.HandlerFunc {
 		}
 
 		// send a 204 No Content response
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// @Summary		GenerateJoinCode
+// @Description	Generate a join code for a class
+// @Accept			json
+// @Produce		json
+// @Param			Authorization	header	string							true	"Bearer token"
+// @Param			id				path	int								true	"Class ID"
+// @Router			/class/{id}/joincode [post]
+// @Security		Bearer
+// @Tags			Class
+func GenerateJoinCode(classService *services.ClassService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// extract the user ID from the request context
+		userID, ok := r.Context().Value(userIDKey).(uint)
+		if !ok {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// extract the class ID from the URL
+		classID, err := getClassIDFromRequest(r)
+		if err != nil {
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+
+		// build the service request
+		sreq := service_models.GenerateJoinCodeRequest{
+			ClassID: classID,
+			UserID:  userID,
+		}
+
+		// call the service
+		sres, err := classService.GenerateJoinCode(sreq)
+		if err != nil {
+			if errors.Is(err, services.ErrClassNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			} else if errors.Is(err, services.ErrUnauthorized) {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		// build the response
+		res := api_models.GenerateJoinCodeResponse{
+			Code:         sres.Code,
+			ExpirationDT: sres.ExpirationDT.Format("2006-01-02 15:04:05"),
+		}
+
+		// encode the response
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+// @Summary		JoinClass
+// @Description	Join a class using a join code
+// @Accept			json
+// @Produce		json
+// @Param			Authorization	header	string							true	"Bearer token"
+// @Param			class			body	api_models.JoinClassRequest		true	"Join code"
+// @Router			/class/join [post]
+// @Security		Bearer
+// @Tags			Class
+func JoinClass(classService *services.ClassService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// extract the user ID from the request context
+		userID, ok := r.Context().Value(userIDKey).(uint)
+		if !ok {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// decode the request body
+		var req api_models.JoinClassRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+
+		// input validation
+		if req.JoinCode == "" {
+			http.Error(w, "join code is required", http.StatusBadRequest)
+			return
+		}
+
+		// build the service request
+		sreq := service_models.JoinClassRequest{
+			UserID:   userID,
+			JoinCode: req.JoinCode,
+		}
+
+		// call the service
+		err := classService.JoinClass(sreq)
+		if err != nil {
+			if errors.Is(err, services.ErrClassNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			} else if errors.Is(err, services.ErrUnauthorized) {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
 		w.WriteHeader(http.StatusNoContent)
 	}
 }

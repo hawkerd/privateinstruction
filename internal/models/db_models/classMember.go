@@ -12,3 +12,7 @@ type ClassMember struct {
 	User    User   `gorm:"foreignKey:UserID"`
 	Role    string `gorm:"not null"` // e.g., "student", "teacher"
 }
+
+func (ClassMember) TableName() string {
+	return "ClassMember"
+}

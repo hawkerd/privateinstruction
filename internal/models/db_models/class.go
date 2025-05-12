@@ -11,3 +11,7 @@ type Class struct {
 	CreatorID   uint
 	CreatedBy   User `gorm:"foreignKey:CreatorID"`
 }
+
+func (Class) TableName() string {
+	return "Class"
+}

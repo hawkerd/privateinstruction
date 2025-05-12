@@ -13,6 +13,7 @@ func Migrate(db *gorm.DB) error {
 		&db_models.User{},
 		&db_models.Class{},
 		&db_models.ClassMember{},
+		&db_models.JoinCode{},
 	)
 	if err != nil {
 		return err

@@ -1,5 +1,7 @@
 package service_models
 
+import "time"
+
 type CreateClassRequest struct {
 	Name        string
 	Description string
@@ -27,4 +29,19 @@ type UpdateClassRequest struct {
 	Description string
 	UserID      uint
 	ClassID     uint
+}
+
+type GenerateJoinCodeRequest struct {
+	ClassID uint
+	UserID  uint
+}
+
+type GenerateJoinCodeResponse struct {
+	Code         string
+	ExpirationDT time.Time
+}
+
+type JoinClassRequest struct {
+	JoinCode string
+	UserID   uint
 }

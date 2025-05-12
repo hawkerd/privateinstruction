@@ -48,6 +48,8 @@ func main() {
 		r.Delete("/class/{id}", handlers.DeleteClass(classService))
 		r.Get("/class/{id}", handlers.ReadClass(classService))
 		r.Put("/class/{id}", handlers.UpdateClass(classService))
+		r.Post("/class/{id}/joincode", handlers.GenerateJoinCode(classService))
+		r.Post("/class/join", handlers.JoinClass(classService))
 		//r.Post("/class", handlers.CreateClass)
 		//r.Get("/classes", handlers.GetClasses)
 	})
