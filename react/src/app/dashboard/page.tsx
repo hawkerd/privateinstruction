@@ -1,8 +1,8 @@
 'use client';
 import { Typography } from '@mui/material';
 
-export default function Plans() {
+export default function Dashboard() {
   return (
-    <Typography>Plans</Typography>
+    <Typography>Dashboard</Typography>
   );
 }

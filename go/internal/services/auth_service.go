@@ -12,10 +12,10 @@ import (
 
 // define custom error messages
 var (
-	ErrUserExists          = errors.New("account already exists with that email or username")
-	ErrInvalidCredentials  = errors.New("invalid credentials")
+	ErrUserExists          = errors.New("Account already exists with this email or username")
+	ErrInvalidCredentials  = errors.New("Invalid credentials")
 	ErrTokenGeneration     = errors.New("failed to generate token")
-	ErrInternalServerError = errors.New("internal server error")
+	ErrInternalServerError = errors.New("Something went wrong")
 )
 
 type AuthService struct {

@@ -26,13 +26,13 @@ func SignUp(authService *services.AuthService) http.HandlerFunc {
 		// decode the request body
 		var req api_models.SignUpRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "bad request", http.StatusBadRequest)
+			http.Error(w, "Please fill out all fields", http.StatusBadRequest)
 			return
 		}
 
 		// input validation
 		if req.Username == "" || req.Password == "" || req.Email == "" {
-			http.Error(w, "username, password, and email are required", http.StatusBadRequest)
+			http.Error(w, "Please fill out all fields", http.StatusBadRequest)
 			return
 		}
 
@@ -49,7 +49,7 @@ func SignUp(authService *services.AuthService) http.HandlerFunc {
 			if errors.Is(err, services.ErrUserExists) {
 				http.Error(w, err.Error(), http.StatusConflict)
 			} else {
-				http.Error(w, "internal server error", http.StatusInternalServerError)
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
 			}
 			return
 		}
