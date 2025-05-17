@@ -2,6 +2,7 @@
 import config from '@/config';
 import { useAuth } from '@/contexts/auth_context';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { SignInRequest, SignUpRequest } from '@/models/api/auth';
 import React, { useState } from 'react';
 import { TextField, Button, Box, Typography, CircularProgress, Alert } from '@mui/material';
@@ -156,6 +157,9 @@ export default function SignUp() {
           {loading ? <CircularProgress size={24} /> : 'Sign Up'}
         </Button>
       </form>
+      <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+        Already have an account? <Link href="/signin">Sign In</Link>
+      </Typography>
     </Box>
   );
 }

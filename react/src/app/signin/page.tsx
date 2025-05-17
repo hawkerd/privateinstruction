@@ -4,10 +4,11 @@ import { useAuth } from '@/contexts/auth_context';
 import { useRouter } from 'next/navigation';
 import { SignInRequest } from '@/models/api/auth';
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { TextField, Button, Box, Typography, CircularProgress, Alert } from '@mui/material';
 
 
-export default function LogIn() {
+export default function SignIn() {
   // auth context
   const context = useAuth();
   const router = useRouter();
@@ -48,26 +49,26 @@ export default function LogIn() {
       return;
     }
 
-    // create login request object
-    const logInReq: SignInRequest = {username: '', email, password};
+    // create sign in request object
+    const signInReq: SignInRequest = {username: '', email, password};
   
     try {
       // make API call to /signin
-      const logInRes = await fetch(`${config.servicePath}/signin`, {
+      const signInRes = await fetch(`${config.servicePath}/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(logInReq),
+        body: JSON.stringify(signInReq),
       });
 
       // handle response
-      if (logInRes.status === 200) {
-        const data = await logInRes.json();
+      if (signInRes.status === 200) {
+        const data = await signInRes.json();
         context.login(data.token);
         router.push('/dashboard');
       } else {
-        const errorText = await logInRes.text();
+        const errorText = await signInRes.text();
         setResponseText(errorText);
         setError(true)
       }
@@ -112,6 +113,9 @@ export default function LogIn() {
           {loading ? <CircularProgress size={24} /> : 'Sign In'}
         </Button>
       </form>
+      <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+        Don't have an account? <Link href="/signup">Sign Up</Link>
+      </Typography>
     </Box>
   );
 }

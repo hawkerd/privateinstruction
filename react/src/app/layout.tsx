@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathName = usePathname();
-  const noHeaderPaths = ['/login', '/signup'];
+  const noHeaderPaths = ['/signin', '/signup'];
   const showHeader = !noHeaderPaths.includes(pathName);
 
 

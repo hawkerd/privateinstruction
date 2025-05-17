@@ -50,12 +50,25 @@ export default function Header() {
                     </Box>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <IconButton color="inherit">
-                        <ProfileIcon />
-                    </IconButton>
-                    <IconButton color="inherit">
-                        <SettingsIcon />
-                    </IconButton>
+                    {isAuthenticated ? (
+                        <>
+                            <IconButton color="inherit">
+                                <ProfileIcon />
+                            </IconButton>
+                            <IconButton color="inherit">
+                                <SettingsIcon />
+                            </IconButton>
+                        </>
+                    ) : (
+                        <>
+                            <Button color="inherit" component={Link} href="/login">
+                                Log In
+                            </Button>
+                            <Button color="inherit" component={Link} href="/signup">
+                                Sign Up
+                            </Button>
+                        </>
+                    )}
                 </Box>
             </Toolbar>
         </AppBar>
