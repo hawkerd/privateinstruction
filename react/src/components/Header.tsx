@@ -6,10 +6,25 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ProfileIcon from '@mui/icons-material/AccountCircle';
 import Pets from '@mui/icons-material/Pets';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth_context';
+import { useUser } from '@/contexts/user_context';
+import ProfileMenu from '@/components/ProfileMenu';
 
 export default function Header() {
     const { token, login, logout, isAuthenticated } = useAuth();
+    const { user, setUser, clearUser } = useUser();
+
+    // state variable for the profile menu
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+    // functions for the profile menu
+    const handleClose = () => {
+        setAnchorEl(null);
+    }
+    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    }
 
     return (
         <AppBar
@@ -52,22 +67,25 @@ export default function Header() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     {isAuthenticated ? (
                         <>
-                            <IconButton color="inherit">
+                            {user && <Typography variant="h6" sx={{ color: 'black' }}>{user.username}</Typography>}
+                            <IconButton
+                                sx={{ color: 'black' }}
+                                onClick={handleClick}>
                                 <ProfileIcon />
                             </IconButton>
-                            <IconButton color="inherit">
-                                <SettingsIcon />
-                            </IconButton>
+                            <ProfileMenu
+                                anchorEl={anchorEl}
+                                handleClose={handleClose}
+                            />
                         </>
+
                     ) : (
-                        <>
-                            <Button color="inherit" component={Link} href="/login">
-                                Log In
-                            </Button>
-                            <Button color="inherit" component={Link} href="/signup">
-                                Sign Up
-                            </Button>
-                        </>
+                        <Button
+                            sx={{ color: 'black' }}
+                            component={Link}
+                            href="/signin">
+                            Sign In
+                        </Button>
                     )}
                 </Box>
             </Toolbar>
