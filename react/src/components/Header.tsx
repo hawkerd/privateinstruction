@@ -2,18 +2,16 @@
 
 import React from 'react';
 import { AppBar, Toolbar, Typography, Button, IconButton, Box } from '@mui/material';
-import SettingsIcon from '@mui/icons-material/Settings';
 import ProfileIcon from '@mui/icons-material/AccountCircle';
 import Pets from '@mui/icons-material/Pets';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth_context';
 import { useUser } from '@/contexts/user_context';
 import ProfileMenu from '@/components/ProfileMenu';
 
 export default function Header() {
-    const { token, login, logout, isAuthenticated } = useAuth();
-    const { user, setUser, clearUser } = useUser();
+    const { isAuthenticated } = useAuth();
+    const { user } = useUser();
 
     // state variable for the profile menu
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -78,7 +76,6 @@ export default function Header() {
                                 handleClose={handleClose}
                             />
                         </>
-
                     ) : (
                         <Button
                             sx={{ color: 'black' }}

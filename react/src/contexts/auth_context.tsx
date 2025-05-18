@@ -17,6 +17,17 @@ const AuthContext = createContext<AuthContextType>({
     isAuthenticated: false,
 });
 
+// utility function to check if the token is expired
+function isTokenExpired(token: string): boolean {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const now = Math.floor(Date.now() / 1000);
+        return payload.exp < now;
+    } catch {
+        return true; // assume expired if we can't decode
+    }
+}
+
 // provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [token, setToken] = useState<string | null>(null);
@@ -24,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // load the token from local storage on mount
     useEffect(() => {
         const storedToken = localStorage.getItem('authToken');
-        if (storedToken) {
+        if (storedToken && !isTokenExpired(storedToken)) {
             setToken(storedToken);
         }
     }, []);

@@ -14,6 +14,7 @@ func Migrate(db *gorm.DB) error {
 		&db_models.Class{},
 		&db_models.ClassMember{},
 		&db_models.JoinCode{},
+		&db_models.RefreshToken{},
 	)
 	if err != nil {
 		return err

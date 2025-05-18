@@ -14,11 +14,16 @@ type SignInRequest struct {
 	Email    string `json:"email"`
 }
 type SignInResponse struct {
-	Token string `json:"token"`
+	AccessToken string `json:"access_token"`
 }
 
 // update password
 type UpdatePasswordRequest struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
+}
+
+// refresh token
+type RefreshTokenResponse struct {
+	AccessToken  string `json:"access_token"`
 }

@@ -36,6 +36,7 @@ func main() {
 
 	r.Post("/signup", handlers.SignUp(authService))
 	r.Post("/signin", handlers.SignIn(authService))
+	r.Post("/auth/refresh", handlers.RefreshToken(authService))
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.TokenAuthMiddleware)
@@ -58,6 +59,7 @@ func main() {
 		AllowedOrigins: []string{"http://localhost:3000"}, // Frontend URL
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
 	})
 	handler := c.Handler(r)
 

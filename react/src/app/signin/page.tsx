@@ -2,7 +2,7 @@
 import config from '@/config';
 import { useAuth } from '@/contexts/auth_context';
 import { useRouter } from 'next/navigation';
-import { SignInRequest } from '@/models/api/auth';
+import { SignInRequest, SignInResponse } from '@/models/api/auth';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { TextField, Button, Box, Typography, CircularProgress, Alert } from '@mui/material';
@@ -59,13 +59,15 @@ export default function SignIn() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(signInReq),
       });
 
       // handle response
       if (signInRes.status === 200) {
         const data = await signInRes.json();
-        context.login(data.token);
+        console.log(data);
+        context.login(data.access_token);
         router.push('/dashboard');
       } else {
         const errorText = await signInRes.text();

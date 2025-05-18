@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/hawkerd/privateinstruction/internal/auth"
 	"github.com/hawkerd/privateinstruction/internal/models/db_models"
@@ -90,14 +91,37 @@ func (s *AuthService) SignIn(req service_models.SignInRequest) (service_models.S
 	}
 
 	// generate a JWT token
-	token, err := auth.GenerateJWT(user.ID, user.Username)
+	accessToken, err := auth.GenerateJWT(user.ID, user.Username)
 	if err != nil {
 		return service_models.SignInResponse{}, ErrTokenGeneration
 	}
 
+	// generate a refresh token and hash it
+	refreshToken, err := auth.GenerateRefreshToken()
+	if err != nil {
+		return service_models.SignInResponse{}, ErrTokenGeneration
+	}
+	hashedToken, err := auth.HashPassword(refreshToken)
+	if err != nil {
+		return service_models.SignInResponse{}, ErrInternalServerError
+	}
+	expiration := auth.RefreshTokenExpiration()
+
+	// store the refresh token in the database
+	refreshTokenRecord := db_models.RefreshToken{
+		UserID:        user.ID,
+		HashedToken:   hashedToken,
+		ExpiresAt: 		expiration,
+	}
+	if err := s.DB.Create(&refreshTokenRecord).Error; err != nil {
+		return service_models.SignInResponse{}, ErrInternalServerError
+	}
+
 	// create the response
 	res := service_models.SignInResponse{
-		Token: token,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		RefreshTokenExpiration: expiration,
 	}
 
 	return res, nil
@@ -129,4 +153,72 @@ func (s *AuthService) UpdatePassword(req service_models.UpdatePasswordRequest) e
 	}
 
 	return nil
+}
+
+// generate a new access token
+func (s *AuthService) RefreshAccessToken(req service_models.RefreshTokenRequest) (service_models.RefreshTokenResponse, error) {
+	// find all refresh tokens for the user
+	var refreshTokens []db_models.RefreshToken
+	if err := s.DB.Where("user_id = ?", req.UserID).Find(&refreshTokens).Error; err != nil {
+		return service_models.RefreshTokenResponse{}, ErrInternalServerError
+	}
+
+	// match the passed refresh token with the stored hashed tokens
+	var refreshToken *db_models.RefreshToken
+	for i, token := range refreshTokens {
+		if auth.CheckPassword(token.HashedToken, req.RefreshToken) {
+			refreshToken = &refreshTokens[i]
+			break
+		}
+	}
+	if refreshToken == nil {
+		return service_models.RefreshTokenResponse{}, ErrInvalidCredentials
+	}
+	
+	// check if the refresh token is expired
+	if time.Now().After(refreshToken.ExpiresAt) {
+		return service_models.RefreshTokenResponse{}, ErrInvalidCredentials
+	}
+
+	// query the user by ID
+	var user db_models.User
+	if err := s.DB.First(&user, refreshToken.UserID).Error; err != nil {
+		return service_models.RefreshTokenResponse{}, ErrInvalidCredentials
+	}
+	// check if the user exists
+	if user.ID == 0 {
+		return service_models.RefreshTokenResponse{}, ErrInvalidCredentials
+	}
+
+	// generate a new access token
+	accessToken, err := auth.GenerateJWT(user.ID, user.Username)
+	if err != nil {
+		return service_models.RefreshTokenResponse{}, ErrTokenGeneration
+	}
+
+	// generate a new refresh token
+	newRefreshToken, err := auth.GenerateRefreshToken()
+	if err != nil {
+		return service_models.RefreshTokenResponse{}, ErrTokenGeneration
+	}
+	// hash the new refresh token
+	newHashedToken, err := auth.HashPassword(newRefreshToken)
+	if err != nil {
+		return service_models.RefreshTokenResponse{}, ErrInternalServerError
+	}
+	// update the new refresh token in the database
+	refreshToken.HashedToken = newHashedToken
+	refreshToken.ExpiresAt = auth.RefreshTokenExpiration()
+	if err := s.DB.Save(&refreshToken).Error; err != nil {
+		return service_models.RefreshTokenResponse{}, ErrInternalServerError
+	}
+
+	// create the response
+	res := service_models.RefreshTokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+		RefreshTokenExpiration: refreshToken.ExpiresAt,
+	}
+	
+	return res, nil
 }

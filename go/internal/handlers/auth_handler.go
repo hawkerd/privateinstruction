@@ -8,6 +8,7 @@ import (
 	"github.com/hawkerd/privateinstruction/internal/models/api_models"
 	"github.com/hawkerd/privateinstruction/internal/models/service_models"
 	"github.com/hawkerd/privateinstruction/internal/services"
+	"github.com/hawkerd/privateinstruction/internal/auth"
 )
 
 //	@Summary		Sign Up
@@ -62,6 +63,7 @@ func SignUp(authService *services.AuthService) http.HandlerFunc {
 
 //	@Summary		Sign In
 //	@Description	Sign in an existing user with username/email and password
+//  @Description	Also sets the refresh token in the cookie
 //	@Accept			json
 //	@Produce		json
 //	@Param			user	body	api_models.SignInRequest	true	"User credentials for sign in"
@@ -101,9 +103,20 @@ func SignIn(authService *services.AuthService) http.HandlerFunc {
 			return
 		}
 
+		// set the refresh token in the cookie
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    sres.RefreshToken,
+			Expires:  sres.RefreshTokenExpiration,
+			HttpOnly: true,
+			Secure:   true,
+			Path: "/auth/refresh",
+			SameSite: http.SameSiteStrictMode,
+		})
+
 		// build the response
 		res := api_models.SignInResponse{
-			Token: sres.Token,
+			AccessToken:  sres.AccessToken,
 		}
 
 		// encode the response
@@ -168,5 +181,84 @@ func UpdatePassword(authService *services.AuthService) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// @Summary		Refresh Access Token
+// @Description	Refresh the access token using the refresh token
+// @Accept		json
+// @Produce		json
+// @Param			Authorization	header	string	true	"Bearer Token"
+// @Router			/auth/refresh [post]
+// @Tags			Auth
+func RefreshToken(authService *services.AuthService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// extract the JWT from the request header
+		tokenString, err := auth.ExtractJWT(r)
+		if err != nil {
+			http.Error(w, "Missing or invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		// parse the token to extract the user ID
+		userID, err := auth.ParseID(tokenString)
+		if err != nil {
+			http.Error(w, "invalid token", http.StatusUnauthorized)
+			return
+		}
+		
+		// extract the refresh token from the cookie
+		cookie, err := r.Cookie("refresh_token")
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		refreshToken := cookie.Value
+
+		// input validation
+		if refreshToken == "" {
+			http.Error(w, "token is required", http.StatusBadRequest)
+			return
+		}
+
+		// build the service request
+		sreq := service_models.RefreshTokenRequest{
+			RefreshToken: refreshToken,
+			UserID:       userID,
+		}
+
+		// call the service
+		sres, err := authService.RefreshAccessToken(sreq)
+		if err != nil {
+			if errors.Is(err, services.ErrInvalidCredentials) {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+			} else {
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+			}
+			return
+		}
+
+		// set the refresh token in the cookie
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    sres.RefreshToken,
+			Expires:  sres.RefreshTokenExpiration,
+			HttpOnly: true,
+			Secure:   true,
+			Path: "/auth/refresh",
+			SameSite: http.SameSiteStrictMode,
+		})
+
+		// build the response
+		res := api_models.RefreshTokenResponse{
+			AccessToken:  sres.AccessToken,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 }

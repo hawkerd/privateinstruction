@@ -1,5 +1,9 @@
 package service_models
 
+import (
+	"time"
+)
+
 type SignUpRequest struct {
 	Username string
 	Password string
@@ -13,11 +17,24 @@ type SignInRequest struct {
 }
 
 type SignInResponse struct {
-	Token string
+	AccessToken string
+	RefreshToken string
+	RefreshTokenExpiration time.Time
 }
 
 type UpdatePasswordRequest struct {
 	UserID      uint
 	OldPassword string
 	NewPassword string
+}
+
+type RefreshTokenRequest struct {
+	RefreshToken string
+	UserID	  uint
+}
+
+type RefreshTokenResponse struct {
+	AccessToken string
+	RefreshToken string
+	RefreshTokenExpiration time.Time
 }

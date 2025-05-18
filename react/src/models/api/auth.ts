@@ -11,7 +11,7 @@ export interface SignInRequest {
 }
 
 export interface SignInResponse {
-  token: string;
+  accessToken: string;
 }
 
 export interface UpdatePasswordRequest {
