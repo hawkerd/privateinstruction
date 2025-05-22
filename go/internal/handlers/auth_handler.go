@@ -5,23 +5,23 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/hawkerd/privateinstruction/internal/auth"
 	"github.com/hawkerd/privateinstruction/internal/models/api_models"
 	"github.com/hawkerd/privateinstruction/internal/models/service_models"
 	"github.com/hawkerd/privateinstruction/internal/services"
-	"github.com/hawkerd/privateinstruction/internal/auth"
 )
 
-//	@Summary		Sign Up
-//	@Description	Sign up a new user
-//	@Accept			json
-//	@Produce		json
-//	@Param			user	body		api_models.SignUpRequest	true	"User details for sign up"
-//	@Success		201		{string}	string						"User created successfully"
-//	@Failure		400		{string}	string						"Bad Request"
-//	@Failure		409		{string}	string						"Conflict"
-//	@Failure		500		{string}	string						"Internal Server Error"
-//	@Router			/signup [post]
-//	@Tags			Auth
+// @Summary		Sign Up
+// @Description	Sign up a new user
+// @Accept			json
+// @Produce		json
+// @Param			user	body		api_models.SignUpRequest	true	"User details for sign up"
+// @Success		201		{string}	string						"User created successfully"
+// @Failure		400		{string}	string						"Bad Request"
+// @Failure		409		{string}	string						"Conflict"
+// @Failure		500		{string}	string						"Internal Server Error"
+// @Router			/signup [post]
+// @Tags			Auth
 func SignUp(authService *services.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// decode the request body
@@ -61,14 +61,14 @@ func SignUp(authService *services.AuthService) http.HandlerFunc {
 	}
 }
 
-//	@Summary		Sign In
-//	@Description	Sign in an existing user with username/email and password
-//  @Description	Also sets the refresh token in the cookie
-//	@Accept			json
-//	@Produce		json
-//	@Param			user	body	api_models.SignInRequest	true	"User credentials for sign in"
-//	@Router			/signin [post]
-//	@Tags			Auth
+//		@Summary		Sign In
+//		@Description	Sign in an existing user with username/email and password
+//	 @Description	Also sets the refresh token in the cookie
+//		@Accept			json
+//		@Produce		json
+//		@Param			user	body	api_models.SignInRequest	true	"User credentials for sign in"
+//		@Router			/signin [post]
+//		@Tags			Auth
 func SignIn(authService *services.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// decode the request body
@@ -109,14 +109,14 @@ func SignIn(authService *services.AuthService) http.HandlerFunc {
 			Value:    sres.RefreshToken,
 			Expires:  sres.RefreshTokenExpiration,
 			HttpOnly: true,
-			Secure:   true,
-			Path: "/auth/refresh",
+			Secure:   false, // for testing
+			Path:     "/auth/refresh",
 			SameSite: http.SameSiteStrictMode,
 		})
 
 		// build the response
 		res := api_models.SignInResponse{
-			AccessToken:  sres.AccessToken,
+			AccessToken: sres.AccessToken,
 		}
 
 		// encode the response
@@ -129,15 +129,15 @@ func SignIn(authService *services.AuthService) http.HandlerFunc {
 	}
 }
 
-//	@Summary		Update Password
-//	@Description	Update the password for an existing user
-//	@Accept			json
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			Authorization	header	string								true	"Bearer Token"
-//	@Param			user			body	api_models.UpdatePasswordRequest	true	"User credentials for updating password"
-//	@Router			/me/password [put]
-//	@Tags			Auth
+// @Summary		Update Password
+// @Description	Update the password for an existing user
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			Authorization	header	string								true	"Bearer Token"
+// @Param			user			body	api_models.UpdatePasswordRequest	true	"User credentials for updating password"
+// @Router			/me/password [put]
+// @Tags			Auth
 func UpdatePassword(authService *services.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract the user ID from the request context
@@ -206,7 +206,7 @@ func RefreshToken(authService *services.AuthService) http.HandlerFunc {
 			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return
 		}
-		
+
 		// extract the refresh token from the cookie
 		cookie, err := r.Cookie("refresh_token")
 		if err != nil {
@@ -244,14 +244,14 @@ func RefreshToken(authService *services.AuthService) http.HandlerFunc {
 			Value:    sres.RefreshToken,
 			Expires:  sres.RefreshTokenExpiration,
 			HttpOnly: true,
-			Secure:   true,
-			Path: "/auth/refresh",
+			Secure:   false, // for testing
+			Path:     "/auth/refresh",
 			SameSite: http.SameSiteStrictMode,
 		})
 
 		// build the response
 		res := api_models.RefreshTokenResponse{
-			AccessToken:  sres.AccessToken,
+			AccessToken: sres.AccessToken,
 		}
 
 		w.Header().Set("Content-Type", "application/json")

@@ -22,7 +22,7 @@ const UserContext = createContext<UserContextType>({
 
 // provider component
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { token, isAuthenticated } = useAuth();
+    const { token, isAuthenticated, fetchWithAuth } = useAuth();
     const [user, setUser] = useState<User | null>(null);
     
     // clear the user
@@ -41,12 +41,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // fetch user data from the API
         const fetchUser = async () => {
             try {
-                const res = await fetch(`${config.servicePath}/me`, {
+                const res = await fetchWithAuth(`${config.servicePath}/me`, {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
                 });
 
                 if (!res.ok) {

@@ -109,9 +109,9 @@ func (s *AuthService) SignIn(req service_models.SignInRequest) (service_models.S
 
 	// store the refresh token in the database
 	refreshTokenRecord := db_models.RefreshToken{
-		UserID:        user.ID,
-		HashedToken:   hashedToken,
-		ExpiresAt: 		expiration,
+		UserID:      user.ID,
+		HashedToken: hashedToken,
+		ExpiresAt:   expiration,
 	}
 	if err := s.DB.Create(&refreshTokenRecord).Error; err != nil {
 		return service_models.SignInResponse{}, ErrInternalServerError
@@ -119,8 +119,8 @@ func (s *AuthService) SignIn(req service_models.SignInRequest) (service_models.S
 
 	// create the response
 	res := service_models.SignInResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken:            accessToken,
+		RefreshToken:           refreshToken,
 		RefreshTokenExpiration: expiration,
 	}
 
@@ -157,7 +157,6 @@ func (s *AuthService) UpdatePassword(req service_models.UpdatePasswordRequest) e
 
 // generate a new access token
 func (s *AuthService) RefreshAccessToken(req service_models.RefreshTokenRequest) (service_models.RefreshTokenResponse, error) {
-	// find all refresh tokens for the user
 	var refreshTokens []db_models.RefreshToken
 	if err := s.DB.Where("user_id = ?", req.UserID).Find(&refreshTokens).Error; err != nil {
 		return service_models.RefreshTokenResponse{}, ErrInternalServerError
@@ -174,7 +173,7 @@ func (s *AuthService) RefreshAccessToken(req service_models.RefreshTokenRequest)
 	if refreshToken == nil {
 		return service_models.RefreshTokenResponse{}, ErrInvalidCredentials
 	}
-	
+
 	// check if the refresh token is expired
 	if time.Now().After(refreshToken.ExpiresAt) {
 		return service_models.RefreshTokenResponse{}, ErrInvalidCredentials
@@ -215,10 +214,10 @@ func (s *AuthService) RefreshAccessToken(req service_models.RefreshTokenRequest)
 
 	// create the response
 	res := service_models.RefreshTokenResponse{
-		AccessToken:  accessToken,
-		RefreshToken: newRefreshToken,
+		AccessToken:            accessToken,
+		RefreshToken:           newRefreshToken,
 		RefreshTokenExpiration: refreshToken.ExpiresAt,
 	}
-	
+
 	return res, nil
 }

@@ -1,14 +1,14 @@
 package auth
 
 import (
-	"fmt"
-	"log"
-	"time"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -61,13 +61,12 @@ func ParseJWT(tokenString string) (jwt.MapClaims, error) {
 	return nil, fmt.Errorf("invalid token")
 }
 
-
 // genearate a refresh token
 func GenerateRefreshToken() (string, error) {
 	bytes := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, bytes); err != nil {
-        return "", err
-    }
+		return "", err
+	}
 	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
